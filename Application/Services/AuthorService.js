@@ -24,6 +24,7 @@ class AuthorService {
     const newAuthor = new Author(
       null,
       authorData.name ?? "Unknown Author",
+      authorData.birthDate ?? new Date(),
       authorData.bio ?? "No biography available",
     );
     return await this.authorRepository.saveNewAuthor(newAuthor);
