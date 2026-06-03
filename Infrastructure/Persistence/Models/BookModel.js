@@ -11,11 +11,9 @@ const BookSchema = new mongoose.Schema(
       maxlength: 100,
     },
     author: {
-      type: String,
+      type: Number,
+      ref: "Author",
       required: true,
-      trim: true,
-      minlength: 3,
-      maxlength: 100,
     },
     price: { type: Number, required: true, min: 0 },
     ISBN: { type: String, required: true },
