@@ -5,4 +5,8 @@ module.exports = {
   server: {
     port: 3000,
   },
+  security: {
+    saltRounds: 10,
+    jwtSecret: process.env.JWT_SECRET || "supersecretkey",
+  },
 };

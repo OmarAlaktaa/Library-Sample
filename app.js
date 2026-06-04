@@ -13,6 +13,7 @@ const BookController = require("./API/Controllers/BookController");
 const AuthorController = require("./API/Controllers/AuthorController");
 const createBookRoutes = require("./API/Routes/BookRoutes");
 const createAuthorRoutes = require("./API/Routes/AuthorRoutes");
+const authRoutes = require("./API/Routes/AuthRoutes");
 
 const app = express();
 
@@ -44,9 +45,11 @@ app.get("/", (req, res) => {
 // Delegate ALL /authors traffic to our dedicated router
 app.use("/authors", authorRoutes);
 
-//
 // Delegate ALL /books traffic to our dedicated router
 app.use("/books", bookRoutes);
+
+// Delegate ALL /auth traffic to our authentication router
+app.use("/auth", authRoutes);
 
 // --- Server Startup ---
 const config = require("./config");
