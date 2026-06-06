@@ -1,5 +1,5 @@
-const UserModel = require("./Models/UserModel");
-const User = require("../../Domain/Entities/User");
+const UserModel = require("../Models/UserModel");
+const User = require("../../../Domain/Entities/User");
 
 class MongoUserRepository {
   async save(userEntity) {

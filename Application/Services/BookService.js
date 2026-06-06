@@ -1,28 +1,43 @@
 const Book = require("../../Domain/Entities/Book");
 const BookNotFoundException = require("../../Domain/Exceptions/BookNotFoundException");
+const logger = require("../../Infrastructure/Logging/logger");
 
 // Service layer to handle business logic related to books
 class BookService {
   constructor(bookRepository) {
-    // We inject the dependency to stick to Hexagonal Architecture
     this.bookRepository = bookRepository;
   }
 
   async getAllBooks() {
-    return await this.bookRepository.getAllBooks();
+    const books = await this.bookRepository.getAllBooks();
+
+    logger.info("All books retrieved successfully", "BookService", {
+      count: books.length,
+    });
+
+    return books;
   }
 
   async getBookById(id) {
     const book = await this.bookRepository.getBookById(id);
+
     if (!book) {
+      logger.warn("Book not found", "BookService", {
+        bookId: id,
+      });
+
       throw new BookNotFoundException(id);
     }
+
+    logger.info("Book retrieved successfully", "BookService", {
+      bookId: book.id,
+      title: book.title,
+    });
+
     return book;
   }
 
   async addBook(bookData) {
-    // Domain business logic: Instantiating the entity
-    // We pass null for the ID because the database will generate it
     const newBook = new Book(
       null,
       bookData.title ?? "Untitled Book",
@@ -31,30 +46,59 @@ class BookService {
       bookData.ISBN ?? "Unknown ISBN",
     );
 
-    return await this.bookRepository.saveNewBook(newBook);
+    const savedBook = await this.bookRepository.saveNewBook(newBook);
+
+    logger.info("Book created successfully", "BookService", {
+      bookId: savedBook.id,
+      title: savedBook.title,
+    });
+
+    return savedBook;
   }
 
   async updateBook(id, newBookData) {
     const existingBook = await this.bookRepository.getBookById(id);
+
     if (!existingBook) {
+      logger.warn("Book update failed - book not found", "BookService", {
+        bookId: id,
+      });
+
       throw new BookNotFoundException(id);
-    } else {
-      existingBook.title = newBookData.title ?? existingBook.title;
-      existingBook.author = newBookData.author ?? existingBook.author;
-      existingBook.price = newBookData.price ?? existingBook.price;
-      existingBook.ISBN = newBookData.ISBN ?? existingBook.ISBN;
     }
 
-    // Use the repository's updateBook method instead of saveBook
-    return await this.bookRepository.updateBook(id, existingBook);
+    existingBook.title = newBookData.title ?? existingBook.title;
+    existingBook.author = newBookData.author ?? existingBook.author;
+    existingBook.price = newBookData.price ?? existingBook.price;
+    existingBook.ISBN = newBookData.ISBN ?? existingBook.ISBN;
+
+    const updatedBook = await this.bookRepository.updateBook(id, existingBook);
+
+    logger.info("Book updated successfully", "BookService", {
+      bookId: updatedBook.id,
+      title: updatedBook.title,
+    });
+
+    return updatedBook;
   }
 
   async deleteBook(id) {
-    if (!this.bookRepository.getBookById(id)) {
+    const existingBook = await this.bookRepository.getBookById(id);
+
+    if (!existingBook) {
+      logger.warn("Book deletion failed - book not found", "BookService", {
+        bookId: id,
+      });
+
       throw new BookNotFoundException(id);
-    } else {
-      this.bookRepository.deleteBook(id);
     }
+
+    await this.bookRepository.deleteBook(id);
+
+    logger.info("Book deleted successfully", "BookService", {
+      bookId: existingBook.id,
+      title: existingBook.title,
+    });
   }
 }
 

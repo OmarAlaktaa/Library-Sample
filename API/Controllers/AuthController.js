@@ -1,4 +1,5 @@
 const authService = require("../../Application/Services/AuthService");
+const logger = require("../../Infrastructure/Logging/logger");
 
 class AuthController {
   async register(req, res, next) {
@@ -8,7 +9,13 @@ class AuthController {
       const { name, email, password, role } = req.body;
       const user = await authService.register(name, email, password, role);
       res.status(201).json({ message: "User registered successfully", user });
+      logger.info("User registered successfully", "AuthController", {
+        userId: user.id,
+      });
     } catch (error) {
+      logger.error("Failed to register user", "AuthController", {
+        error: error.message,
+      });
       if (error.message === "Email is already in use") {
         res.status(400).json({ message: error.message });
       } else {
@@ -24,7 +31,13 @@ class AuthController {
       const { email, password } = req.body;
       const data = await authService.login(email, password);
       res.status(200).json(data);
+      logger.info("User logged in successfully", "AuthController", {
+        userId: data.user.id,
+      });
     } catch (error) {
+      logger.error("Failed to login user", "AuthController", {
+        error: error.message,
+      });
       if (error.name === "InvalidCredentialsException") {
         res.status(error.status).json({ message: error.message });
       } else {

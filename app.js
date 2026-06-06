@@ -5,8 +5,8 @@ const connectDB = require("./Infrastructure/Persistence/database");
 connectDB();
 
 // --- Import Layers / Dependencies ---
-const MongoBookRepository = require("./Infrastructure/Persistence/MongoBookRepository");
-const MongoAuthorRepository = require("./Infrastructure/Persistence/MongoAuthorRepository");
+const MongoBookRepository = require("./Infrastructure/Persistence/ModelsRepositories/MongoBookRepository");
+const MongoAuthorRepository = require("./Infrastructure/Persistence/ModelsRepositories/MongoAuthorRepository");
 const BookService = require("./Application/Services/BookService");
 const AuthorService = require("./Application/Services/AuthorService");
 const BookController = require("./API/Controllers/BookController");

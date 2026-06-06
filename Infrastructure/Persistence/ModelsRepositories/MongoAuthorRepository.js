@@ -1,5 +1,5 @@
-const AuthorModel = require("./Models/AuthorModel");
-const Author = require("../../Domain/Entities/Author");
+const AuthorModel = require("../Models/AuthorModel");
+const Author = require("../../../Domain/Entities/Author");
 
 class MongoAuthorRepository {
   // Helper to map a mongoose document to our pure Domain Entity

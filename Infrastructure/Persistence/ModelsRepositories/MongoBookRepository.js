@@ -1,5 +1,5 @@
-const BookModel = require("./Models/BookModel");
-const Book = require("../../Domain/Entities/Book");
+const BookModel = require("../Models/BookModel");
+const Book = require("../../../Domain/Entities/Book");
 
 class MongoBookRepository {
   // Helper to map a mongoose document to our pure Domain Entity

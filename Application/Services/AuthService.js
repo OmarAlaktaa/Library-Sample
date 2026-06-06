@@ -1,4 +1,4 @@
-const userRepository = require("../../Infrastructure/Persistence/MongoUserRepository");
+const userRepository = require("../../Infrastructure/Persistence/ModelsRepositories/MongoUserRepository");
 const passwordHasher = require("../../Infrastructure/Security/PasswordHasher");
 const tokenService = require("../../Infrastructure/Security/TokenService");
 const User = require("../../Domain/Entities/User");
