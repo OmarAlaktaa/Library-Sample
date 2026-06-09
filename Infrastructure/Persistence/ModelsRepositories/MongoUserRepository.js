@@ -28,7 +28,7 @@ class MongoUserRepository {
 
   _mapToEntity(userModel) {
     return new User(
-      userModel._id.toString(),
+      userModel._id,
       userModel.name,
       userModel.email,
       userModel.password,
@@ -37,4 +37,4 @@ class MongoUserRepository {
   }
 }
 
-module.exports = new MongoUserRepository();
+module.exports = MongoUserRepository;

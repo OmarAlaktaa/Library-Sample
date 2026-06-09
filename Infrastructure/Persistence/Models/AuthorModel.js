@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const AuthorSchema = new mongoose.Schema(
   {
-    _id: { type: Number },
+    _id: { type: mongoose.Types.ObjectId, auto: true, required: true },
     name: {
       type: String,
       required: true,

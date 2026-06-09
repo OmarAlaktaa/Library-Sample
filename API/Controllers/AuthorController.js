@@ -6,9 +6,6 @@ class AuthorController {
     this.authorService = authorService;
   }
 
-  /**
-   * @desc Get all authors
-   */
   getAllAuthors = async (req, res) => {
     try {
       const authors = await this.authorService.getAllAuthors();
@@ -34,23 +31,9 @@ class AuthorController {
     }
   };
 
-  /**
-   * @desc Get an author by ID
-   */
   getAuthorById = async (req, res) => {
     try {
-      const authorId = parseInt(req.params.id, 10);
-
-      if (isNaN(authorId)) {
-        logger.warn("Invalid author ID format", "AuthorController", {
-          param: req.params.id,
-        });
-
-        return res.status(400).json({
-          error: "Invalid author ID",
-        });
-      }
-
+      const authorId = req.params.id;
       const author = await this.authorService.getAuthorById(authorId);
 
       if (!author) {
@@ -91,9 +74,6 @@ class AuthorController {
     }
   };
 
-  /**
-   * @desc Add a new author
-   */
   addAuthor = async (req, res) => {
     try {
       const safeData = AuthorDTO.fromRequest(req.body);
@@ -120,23 +100,9 @@ class AuthorController {
     }
   };
 
-  /**
-   * @desc Update an author
-   */
   updateAuthor = async (req, res) => {
     try {
-      const authorId = parseInt(req.params.id, 10);
-
-      if (isNaN(authorId)) {
-        logger.warn("Invalid author ID format", "AuthorController", {
-          param: req.params.id,
-          authorId,
-        });
-
-        return res.status(400).json({
-          error: "Invalid author ID",
-        });
-      }
+      const authorId = req.params.id;
 
       const safeData = AuthorDTO.fromRequest(req.body);
 
@@ -188,22 +154,9 @@ class AuthorController {
     }
   };
 
-  /**
-   * @desc Delete an author
-   */
   deleteAuthor = async (req, res) => {
     try {
-      const authorId = parseInt(req.params.id, 10);
-
-      if (isNaN(authorId)) {
-        logger.warn("Invalid author ID format", "AuthorController", {
-          param: req.params.id,
-        });
-
-        return res.status(400).json({
-          error: "Invalid author ID",
-        });
-      }
+      const authorId = req.params.id;
 
       const deleted = await this.authorService.deleteAuthor(authorId);
 

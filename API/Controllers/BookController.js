@@ -7,9 +7,6 @@ class BookController {
     this.bookService = bookService;
   }
 
-  /**
-   * @desc Get all books
-   */
   getAllBooks = async (req, res) => {
     try {
       const books = await this.bookService.getAllBooks();
@@ -33,25 +30,9 @@ class BookController {
     }
   };
 
-  /**
-   * @desc Get a book by ID
-   * @route GET /books/:id
-   * @access public
-   */
   getBookById = async (req, res) => {
     try {
-      const bookId = parseInt(req.params.id, 10);
-
-      if (isNaN(bookId)) {
-        logger.warn("Invalid book ID format", "BookController", {
-          param: req.params.id,
-          bookId,
-        });
-
-        return res.status(400).json({
-          error: "Invalid book ID",
-        });
-      }
+      const bookId = req.params.id;
 
       const book = await this.bookService.getBookById(bookId);
 
@@ -93,17 +74,10 @@ class BookController {
     }
   };
 
-  /**
-   * @desc Add a new book
-   * @route POST /books
-   * @access public
-   */
   addBook = async (req, res) => {
     try {
       const safeData = BookDTO.fromRequest(req.body);
-
       const newBook = await this.bookService.addBook(safeData);
-
       const responseData = BookDTO.toResponse(newBook);
 
       logger.info(
@@ -131,25 +105,9 @@ class BookController {
     }
   };
 
-  /**
-   * @desc Update a book
-   * @route PUT /books/:id
-   * @access public
-   */
   updateBook = async (req, res) => {
     try {
-      const bookId = parseInt(req.params.id, 10);
-
-      if (isNaN(bookId)) {
-        logger.warn("Invalid book ID format", "BookController", {
-          param: req.params.id,
-        });
-
-        return res.status(400).json({
-          error: "Invalid book ID",
-        });
-      }
-
+      const bookId = req.params.id;
       const safeData = BookDTO.fromRequest(req.body);
 
       const updatedBook = await this.bookService.updateBook(bookId, safeData);
@@ -188,24 +146,9 @@ class BookController {
     }
   };
 
-  /**
-   * @desc Delete a book
-   * @route DELETE /books/:id
-   * @access public
-   */
   deleteBook = async (req, res) => {
     try {
-      const bookId = parseInt(req.params.id, 10);
-
-      if (isNaN(bookId)) {
-        logger.warn("Invalid book ID format", "BookController", {
-          param: req.params.id,
-        });
-
-        return res.status(400).json({
-          error: "Invalid book ID",
-        });
-      }
+      const bookId = req.params.id;
 
       await this.bookService.deleteBook(bookId);
 

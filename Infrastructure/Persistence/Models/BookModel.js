@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const BookSchema = new mongoose.Schema(
   {
-    _id: { type: Number },
     title: {
       type: String,
       required: true,
@@ -11,7 +10,7 @@ const BookSchema = new mongoose.Schema(
       maxlength: 100,
     },
     author: {
-      type: Number,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Author",
       required: true,
     },

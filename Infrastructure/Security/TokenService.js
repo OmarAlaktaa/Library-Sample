@@ -2,8 +2,8 @@ const jwt = require("jsonwebtoken");
 const config = require("../../config");
 
 class TokenService {
-  constructor() {
-    this.secret = config.security.jwtSecret;
+  constructor(secret, logger) {
+    this.secret = secret;
   }
 
   generateToken(user) {
@@ -18,4 +18,4 @@ class TokenService {
   }
 }
 
-module.exports = new TokenService();
+module.exports = TokenService;

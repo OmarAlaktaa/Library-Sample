@@ -1,8 +1,20 @@
 const express = require("express");
-const router = express.Router();
-const authController = require("../Controllers/AuthController");
+const asyncHandler = require("express-async-handler");
 
-router.post("/register", authController.register.bind(authController));
-router.post("/login", authController.login.bind(authController));
+// Routes layer to define API endpoints related to books
+function createAuthRoutes(authController) {
+  // Mapping HTTP Verbs and Route Paths to Controller Methods
+  const router = express.Router();
 
-module.exports = router;
+  router.post(
+    "/register",
+    asyncHandler(authController.register.bind(authController)),
+  );
+
+  router.post(
+    "/login",
+    asyncHandler(authController.login.bind(authController)),
+  );
+  return router;
+}
+module.exports = createAuthRoutes;

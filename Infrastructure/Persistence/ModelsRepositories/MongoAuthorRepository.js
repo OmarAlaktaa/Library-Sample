@@ -21,22 +21,16 @@ class MongoAuthorRepository {
       return null;
     }
   }
-
   async saveNewAuthor(author) {
-    // 1. Find the highest existing ID
-    const lastAuthor = await AuthorModel.findOne().sort({ _id: -1 });
-    const newId = lastAuthor && lastAuthor._id ? lastAuthor._id + 1 : 1;
-
     const newDoc = new AuthorModel({
-      _id: newId,
       name: author.name,
       birthDate: author.birthDate,
       bio: author.bio,
     });
+
     const savedDoc = await newDoc.save();
     return this._mapToEntity(savedDoc);
   }
-
   async updateAuthor(id, updatedAuthor) {
     try {
       const doc = await AuthorModel.findByIdAndUpdate(
@@ -46,7 +40,7 @@ class MongoAuthorRepository {
           birthDate: updatedAuthor.birthDate,
           bio: updatedAuthor.bio,
         },
-        { new: true },
+        { returnDocument: "after" },
       );
       return this._mapToEntity(doc);
     } catch (err) {

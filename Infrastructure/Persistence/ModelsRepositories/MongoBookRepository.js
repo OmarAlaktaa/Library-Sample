@@ -2,11 +2,11 @@ const BookModel = require("../Models/BookModel");
 const Book = require("../../../Domain/Entities/Book");
 
 class MongoBookRepository {
-  // Helper to map a mongoose document to our pure Domain Entity
   _mapToEntity(doc) {
     if (!doc) return null;
+
     return new Book(
-      doc._id, // Pass as number
+      doc._id.toString(),
       doc.title,
       doc.author,
       doc.price,
@@ -16,7 +16,7 @@ class MongoBookRepository {
 
   async getAllBooks() {
     const docs = await BookModel.find();
-    return docs.map(this._mapToEntity);
+    return docs.map((doc) => this._mapToEntity(doc));
   }
 
   async getBookById(id) {
@@ -24,25 +24,26 @@ class MongoBookRepository {
       const doc = await BookModel.findById(id);
       return this._mapToEntity(doc);
     } catch (err) {
-      // If id is not a valid ObjectId, Mongoose throws an error
       return null;
     }
   }
 
   async saveNewBook(book) {
-    // 1. Find the highest existing ID
-    const lastBook = await BookModel.findOne().sort({ _id: -1 });
-    const newId = lastBook && lastBook._id ? lastBook._id + 1 : 1;
+    try {
+      const newDoc = new BookModel({
+        title: book.title,
+        author: book.author,
+        price: book.price,
+        ISBN: book.ISBN,
+      });
 
-    const newDoc = new BookModel({
-      _id: newId,
-      title: book.title,
-      author: book.author,
-      price: book.price,
-      ISBN: book.ISBN,
-    });
-    const savedDoc = await newDoc.save();
-    return this._mapToEntity(savedDoc);
+      const savedDoc = await newDoc.save();
+
+      return this._mapToEntity(savedDoc);
+    } catch (err) {
+      console.error("Error saving book:", err);
+      throw err;
+    }
   }
 
   async updateBook(id, updatedBook) {
@@ -55,10 +56,12 @@ class MongoBookRepository {
           price: updatedBook.price,
           ISBN: updatedBook.ISBN,
         },
-        { new: true }, // Returns the updated document
+        { returnDocument: "after" },
       );
+
       return this._mapToEntity(doc);
     } catch (err) {
+      console.error("Error updating book:", err);
       return null;
     }
   }
@@ -67,8 +70,16 @@ class MongoBookRepository {
     try {
       await BookModel.findByIdAndDelete(id);
     } catch (err) {
-      // ignore
+      console.error(err);
     }
+  }
+
+  async updateRating(bookId, rating) {
+    return BookModel.findByIdAndUpdate(
+      bookId,
+      { rating },
+      { returnDocument: "after" },
+    );
   }
 }
 

@@ -1,7 +1,14 @@
-const TokenService = require("./TokenService");
 const logger = require("../../Infrastructure/Logging/logger");
 
 class AuthMiddleware {
+  constructor(tokenService) {
+    this.TokenService = tokenService;
+
+    // Binding methods to ensure correct 'this' context when used as middleware
+    this.verifyToken = this.verifyToken.bind(this);
+    this.verifyAdmin = this.verifyAdmin.bind(this);
+  }
+
   verifyToken(req, res, next) {
     const AUTH_SCHEME = "Bearer ";
     const authHeader = req.headers.authorization;
@@ -23,7 +30,7 @@ class AuthMiddleware {
     }
 
     const token = authHeader.slice(AUTH_SCHEME.length);
-    const decodedUser = TokenService.verifyToken(token);
+    const decodedUser = this.TokenService.verifyToken(token);
 
     logger.info(
       `User authenticated successfully (ID=${decodedUser.id})`,
@@ -85,4 +92,4 @@ class AuthMiddleware {
   }
 }
 
-module.exports = new AuthMiddleware();
+module.exports = AuthMiddleware;

@@ -1,5 +1,5 @@
 const Author = require("../../Domain/Entities/Author");
-const AuthorNotFoundException = require("../../Domain/Exceptions/AuthorNotFoundException");
+const AuthorNotFoundException = require("../../Domain/Exceptions/Author/AuthorNotFoundException");
 const logger = require("../../Infrastructure/Logging/logger");
 
 class AuthorService {

@@ -1,15 +1,17 @@
-const authService = require("../../Application/Services/AuthService");
 const logger = require("../../Infrastructure/Logging/logger");
 
 class AuthController {
+  constructor(authService) {
+    this.authService = authService;
+  }
   async register(req, res, next) {
     // returns UserDTO of the newly created user,
     // otherwise throws an error if email is already in use
     try {
       const { name, email, password, role } = req.body;
-      const user = await authService.register(name, email, password, role);
+      const user = await this.authService.register(name, email, password, role);
       res.status(201).json({ message: "User registered successfully", user });
-      logger.info("User registered successfully", "AuthController", {
+      logger.info(`User ${name} registered successfully`, "AuthController", {
         userId: user.id,
       });
     } catch (error) {
@@ -29,7 +31,7 @@ class AuthController {
     //  otherwise throws InvalidCredentialsException
     try {
       const { email, password } = req.body;
-      const data = await authService.login(email, password);
+      const data = await this.authService.login(email, password);
       res.status(200).json(data);
       logger.info("User logged in successfully", "AuthController", {
         userId: data.user.id,
@@ -47,4 +49,4 @@ class AuthController {
   }
 }
 
-module.exports = new AuthController();
+module.exports = AuthController;

@@ -1,5 +1,5 @@
 const Book = require("../../Domain/Entities/Book");
-const BookNotFoundException = require("../../Domain/Exceptions/BookNotFoundException");
+const BookNotFoundException = require("../../Domain/Exceptions/Book/BookNotFoundException");
 const logger = require("../../Infrastructure/Logging/logger");
 
 // Service layer to handle business logic related to books
@@ -45,9 +45,7 @@ class BookService {
       bookData.price ?? 0,
       bookData.ISBN ?? "Unknown ISBN",
     );
-
     const savedBook = await this.bookRepository.saveNewBook(newBook);
-
     logger.info("Book created successfully", "BookService", {
       bookId: savedBook.id,
       title: savedBook.title,
@@ -58,7 +56,6 @@ class BookService {
 
   async updateBook(id, newBookData) {
     const existingBook = await this.bookRepository.getBookById(id);
-
     if (!existingBook) {
       logger.warn("Book update failed - book not found", "BookService", {
         bookId: id,

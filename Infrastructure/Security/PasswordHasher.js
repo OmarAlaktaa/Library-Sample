@@ -2,9 +2,12 @@ const bcrypt = require("bcryptjs");
 const config = require("../../config");
 
 class PasswordHasher {
+  constructor(saltRounds, logger) {
+    this.saltRounds = saltRounds || config.security.saltRounds || 10;
+  }
+
   async hash(password) {
-    const saltRounds = config.security.saltRounds || 10;
-    const salt = await bcrypt.genSalt(saltRounds);
+    const salt = await bcrypt.genSalt(this.saltRounds);
     return await bcrypt.hash(password, salt);
   }
 
@@ -14,4 +17,4 @@ class PasswordHasher {
   }
 }
 
-module.exports = new PasswordHasher();
+module.exports = PasswordHasher;
