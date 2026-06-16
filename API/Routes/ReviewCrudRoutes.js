@@ -1,21 +1,29 @@
 const express = require("express");
+const asyncHandler = require("express-async-handler");
 
 function createReviewCrudRoutes({ reviewController, authenticate, authorize }) {
   const router = express.Router();
 
   // GET /reviews/:id
-  router.get("/:id", (req, res, next) =>
-    reviewController.getReviewById(req, res, next),
+  router.get(
+    "/:id",
+    asyncHandler(reviewController.getReviewById.bind(reviewController)),
   );
 
   // PUT /reviews/:id
-  router.put("/:id", authenticate, (req, res, next) =>
-    reviewController.updateReview(req, res, next),
+  router.put(
+    "/:id",
+    authenticate,
+    authorize("USER", "ADMIN"),
+    asyncHandler(reviewController.updateReview.bind(reviewController)),
   );
 
   // DELETE /reviews/:id
-  router.delete("/:id", authenticate, (req, res, next) =>
-    reviewController.deleteReview(req, res, next),
+  router.delete(
+    "/:id",
+    authorize("USER", "ADMIN"),
+    authenticate,
+    asyncHandler(reviewController.deleteReview.bind(reviewController)),
   );
 
   // DELETE /reviews/admin/:id
@@ -23,7 +31,7 @@ function createReviewCrudRoutes({ reviewController, authenticate, authorize }) {
     "/admin/:id",
     authenticate,
     authorize("ADMIN"),
-    (req, res, next) => reviewController.deleteReview(req, res, next),
+    asyncHandler(reviewController.deleteReview.bind(reviewController)),
   );
 
   return router;

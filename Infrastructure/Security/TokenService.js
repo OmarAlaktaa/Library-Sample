@@ -1,20 +1,43 @@
 const jwt = require("jsonwebtoken");
-const config = require("../../config");
 
 class TokenService {
-  constructor(secret, logger) {
-    this.secret = secret;
+  constructor(accessSecret, refreshSecret, logger) {
+    this.accessSecret = accessSecret;
+    this.refreshSecret = refreshSecret;
+    this.logger = logger;
   }
 
-  generateToken(user) {
-    return jwt.sign({ id: user.id, role: user.role }, this.secret, {
-      expiresIn: "1d",
-    });
+  generateAccessToken(user) {
+    return jwt.sign(
+      {
+        id: user.id,
+        role: user.role,
+      },
+      this.accessSecret,
+      {
+        expiresIn: "15m",
+      },
+    );
   }
 
-  verifyToken(token) {
-    // returns decoded User from token payload if valid, otherwise throws an error
-    return jwt.verify(token, this.secret);
+  generateRefreshToken(user) {
+    return jwt.sign(
+      {
+        id: user.id,
+      },
+      this.refreshSecret,
+      {
+        expiresIn: "7d",
+      },
+    );
+  }
+
+  verifyAccessToken(token) {
+    return jwt.verify(token, this.accessSecret);
+  }
+
+  verifyRefreshToken(token) {
+    return jwt.verify(token, this.refreshSecret);
   }
 }
 

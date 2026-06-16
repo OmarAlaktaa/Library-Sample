@@ -1,79 +1,117 @@
-const userRepository = require("../../Infrastructure/Persistence/ModelsRepositories/MongoUserRepository");
-const passwordHasher = require("../../Infrastructure/Security/PasswordHasher");
-const tokenService = require("../../Infrastructure/Security/TokenService");
 const User = require("../../Domain/Entities/User");
 const UserDTO = require("../DTOs/UserDTO");
 const InvalidCredentialsException = require("../../Domain/Exceptions/Auth/InvalidCredentialsException");
+const EmailAlreadyUsedException = require("../../Domain/Exceptions/Auth/EmailAlreadyUsedException");
 
 class AuthService {
-  constructor(userRepository, passwordHasher, tokenService, logger) {
+  constructor(
+    userRepository,
+    refreshTokenRepository,
+    passwordHasher,
+    tokenService,
+    logger,
+    refreshTokenTtlMs = 7 * 24 * 60 * 60 * 1000,
+  ) {
     this.userRepository = userRepository;
+    this.refreshTokenRepository = refreshTokenRepository;
     this.passwordHasher = passwordHasher;
     this.tokenService = tokenService;
     this.logger = logger;
+    this.refreshTokenTtlMs = refreshTokenTtlMs;
   }
 
   async register(name, email, password, role = "READER") {
-    // returns UserDTO of the newly created user,
-    // otherwise throws an error if email is already in use
     const existingUser = await this.userRepository.findByEmail(email);
+
     if (existingUser) {
-      this.logger.warn("Attempt to register existing user", "AuthService", {
-        email,
-      });
-      throw new Error("Email is already in use");
+      this.logger.warn("Email already used", "AuthService", { email });
+      throw new EmailAlreadyUsedException();
     }
 
     const hashedPassword = await this.passwordHasher.hash(password);
-    const userToSave = new User(null, name, email, hashedPassword, role);
-    const savedUser = await this.userRepository.save(userToSave);
 
-    this.logger.info("New user registered successfully", "AuthService", {
+    const user = new User(null, name, email, hashedPassword, role);
+    const savedUser = await this.userRepository.save(user);
+
+    this.logger.info("User registered", "AuthService", {
       userId: savedUser.id,
-      email: savedUser.email,
     });
+
     return new UserDTO(savedUser);
   }
 
   async login(email, password) {
-    // returns object with { user: UserDTO, token: JWT } if successful,
-    //  otherwise throws InvalidCredentialsException
     const user = await this.userRepository.findByEmail(email);
+
     if (!user) {
-      this.logger.warn(
-        "Failed login attempt with non-existent email",
-        "AuthService",
-        {
-          email,
-        },
-      );
+      this.logger.warn("Login failed (user not found)", "AuthService", {
+        email,
+      });
       throw new InvalidCredentialsException();
     }
 
-    const isPasswordValid = await this.passwordHasher.compare(
-      password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      this.logger.warn(
-        "Failed login attempt with invalid password",
-        "AuthService",
-        {
-          email,
-        },
-      );
+    const valid = await this.passwordHasher.compare(password, user.password);
+
+    if (!valid) {
+      this.logger.warn("Login failed (bad password)", "AuthService", { email });
       throw new InvalidCredentialsException();
     }
 
-    const token = this.tokenService.generateToken(user);
-    this.logger.info("User logged in successfully", "AuthService", {
-      userId: user.id,
-      email: user.email,
-    });
+    const accessToken = this.tokenService.generateAccessToken(user);
+    const refreshToken = this.tokenService.generateRefreshToken(user);
+
+    await this.storeRefreshToken(user.id, refreshToken);
+
     return {
       user: new UserDTO(user),
-      token,
+      accessToken,
+      refreshToken,
     };
+  }
+
+  async refresh(refreshToken) {
+    const payload = this.tokenService.verifyRefreshToken(refreshToken);
+
+    const existing =
+      await this.refreshTokenRepository.findByTokenHash(refreshToken);
+
+    if (!existing) {
+      throw new InvalidCredentialsException();
+    }
+
+    const user = await this.userRepository.findById(payload.id);
+
+    if (!user) {
+      throw new InvalidCredentialsException();
+    }
+
+    const newAccessToken = this.tokenService.generateAccessToken(user);
+    const newRefreshToken = this.tokenService.generateRefreshToken(user);
+
+    await this.rotateRefreshToken(existing, newRefreshToken, user.id);
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+
+  async storeRefreshToken(userId, refreshToken) {
+    await this.refreshTokenRepository.save({
+      userId,
+      tokenHash: refreshToken,
+      expiresAt: new Date(Date.now() + this.refreshTokenTtlMs),
+    });
+  }
+
+  async rotateRefreshToken(oldTokenRecord, newRefreshToken, userId) {
+    await this.refreshTokenRepository.delete(oldTokenRecord.id);
+
+    await this.refreshTokenRepository.save({
+      userId,
+      tokenHash: newRefreshToken,
+      expiresAt: new Date(Date.now() + this.refreshTokenTtlMs),
+    });
   }
 }
 

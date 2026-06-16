@@ -1,21 +1,27 @@
 const express = require("express");
+const asyncHandler = require("express-async-handler");
 
-function createReviewRoutes({ reviewController, authenticate }) {
+function createReviewRoutes(reviewController, authenticate, authorize) {
   const router = express.Router();
 
-  // GET /books/:bookId/reviews
-  router.get("/:bookId/reviews", (req, res, next) =>
-    reviewController.getReviewsByBook(req, res, next),
+  // 📖 PUBLIC - anyone can view reviews
+  router.get(
+    "/:bookId/reviews",
+    asyncHandler(reviewController.getReviewsByBook.bind(reviewController)),
   );
 
-  // GET /books/:bookId/rating
-  router.get("/:bookId/rating", (req, res, next) =>
-    reviewController.getBookRating(req, res, next),
+  // 📖 PUBLIC - anyone can view rating
+  router.get(
+    "/:bookId/rating",
+    asyncHandler(reviewController.getBookRating.bind(reviewController)),
   );
 
-  // POST /books/:bookId/reviews
-  router.post("/:bookId/reviews", authenticate, (req, res, next) =>
-    reviewController.createReview(req, res, next),
+  // 🔒 PROTECTED - logged-in users can create reviews
+  router.post(
+    "/:bookId/reviews",
+    authenticate,
+    authorize("USER", "ADMIN"),
+    asyncHandler(reviewController.createReview.bind(reviewController)),
   );
 
   return router;

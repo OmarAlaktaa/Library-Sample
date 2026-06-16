@@ -15,6 +15,12 @@ function createAuthRoutes(authController) {
     "/login",
     asyncHandler(authController.login.bind(authController)),
   );
+
+  router.post(
+    "/refresh",
+    asyncHandler(authController.refresh.bind(authController)),
+  );
+
   return router;
 }
 module.exports = createAuthRoutes;

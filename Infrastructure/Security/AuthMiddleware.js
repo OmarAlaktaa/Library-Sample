@@ -30,22 +30,13 @@ class AuthMiddleware {
     }
 
     const token = authHeader.slice(AUTH_SCHEME.length);
-    const decodedUser = this.TokenService.verifyToken(token);
 
-    logger.info(
-      `User authenticated successfully (ID=${decodedUser.id})`,
-      "AuthMiddleware",
-      {
-        userId: decodedUser.id,
-        role: decodedUser.role,
-        path: req.originalUrl,
-      },
-    );
+    const decodedUser = this.TokenService.verifyAccessToken(token);
 
     req.user = decodedUser;
+
     next();
   }
-
   verifyAdmin(req, res, next) {
     if (!req.user) {
       logger.warn(

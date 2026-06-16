@@ -1,21 +1,43 @@
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 
-// Routes layer to define API endpoints related to books
-function createBookRoutes(bookController) {
+function createBookRoutes(bookController, authenticate, authorize) {
   const router = express.Router();
 
-  // Mapping HTTP Verbs and Route Paths to Controller Methods
+  // 📖 PUBLIC - anyone can read books
+  router.get(
+    "/",
+    asyncHandler(bookController.getAllBooks.bind(bookController)),
+  );
 
-  router.get("/", asyncHandler(bookController.getAllBooks));
+  router.get(
+    "/:id",
+    asyncHandler(bookController.getBookById.bind(bookController)),
+  );
 
-  router.post("/", asyncHandler(bookController.addBook));
+  // 🔒 PROTECTED - only logged-in users can create books
+  router.post(
+    "/",
+    authenticate,
+    authorize("ADMIN"), // change if you want USER also
+    asyncHandler(bookController.addBook.bind(bookController)),
+  );
 
-  router.get("/:id", asyncHandler(bookController.getBookById));
+  // 🔒 PROTECTED - update book
+  router.put(
+    "/:id",
+    authenticate,
+    authorize("ADMIN"),
+    asyncHandler(bookController.updateBook.bind(bookController)),
+  );
 
-  router.put("/:id", asyncHandler(bookController.updateBook));
-
-  router.delete("/:id", asyncHandler(bookController.deleteBook));
+  // 🔒 PROTECTED - delete book
+  router.delete(
+    "/:id",
+    authenticate,
+    authorize("ADMIN"),
+    asyncHandler(bookController.deleteBook.bind(bookController)),
+  );
 
   return router;
 }

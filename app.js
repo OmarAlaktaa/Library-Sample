@@ -13,6 +13,7 @@ const MongoBookRepository = require("./Infrastructure/Persistence/ModelsReposito
 const MongoAuthorRepository = require("./Infrastructure/Persistence/ModelsRepositories/MongoAuthorRepository");
 const MongoUserRepository = require("./Infrastructure/Persistence/ModelsRepositories/MongoUserRepository");
 const MongoReviewRepository = require("./Infrastructure/Persistence/ModelsRepositories/MongoReviewRepository");
+const MongoRefreshTokenRepository = require("./Infrastructure/Persistence/ModelsRepositories/MongoRefreshTokenRepository");
 
 // Application Layer -- Importing Services
 const BookService = require("./Application/Services/BookService");
@@ -38,7 +39,11 @@ const createReviewCrudRoutes = require("./API/Routes/ReviewCrudRoutes");
 const createAuthRoutes = require("./API/Routes/AuthRoutes");
 
 const passwordHasher = new PasswordHasher(config.security.saltRounds);
-const tokenService = new TokenService(config.security.jwtSecret);
+const tokenService = new TokenService(
+  config.security.jwtSecret,
+  config.security.jwtSecret,
+  logger,
+);
 
 // Composition Root
 // Dependency Injection
@@ -48,12 +53,14 @@ const userRepository = new MongoUserRepository();
 const bookRepository = new MongoBookRepository();
 const authorRepository = new MongoAuthorRepository();
 const reviewRepository = new MongoReviewRepository({ logger });
+const refreshTokenRepository = new MongoRefreshTokenRepository(logger);
 
 // Services
 const bookService = new BookService(bookRepository);
 const authorService = new AuthorService(authorRepository);
 const authService = new AuthService(
   userRepository,
+  refreshTokenRepository,
   passwordHasher,
   tokenService,
   logger,
@@ -67,7 +74,7 @@ const reviewService = new ReviewService(
 // Initializing Controllers
 const bookController = new BookController(bookService);
 const authorController = new AuthorController(authorService);
-const reviewController = new ReviewController({ reviewService, logger });
+const reviewController = new ReviewController(reviewService, logger);
 const authController = new AuthController(authService);
 
 // Custom Middlewares
@@ -77,28 +84,41 @@ const AuthMiddleware = require("./Infrastructure/Security/AuthMiddleware");
 // which allows us to use its methods with access to the TokenService instance
 const authMiddleware = new AuthMiddleware(tokenService);
 
-// Routers
-const bookRoutes = createBookRoutes(bookController);
-const authorRoutes = createAuthorRoutes(authorController);
-const authRoutes = createAuthRoutes(authController);
-const reviewRoutes = createReviewRoutes({
-  reviewController,
-  authenticate: authMiddleware.verifyToken,
-  authorize: (role) => (req, res, next) => {
-    // simplified authorization for roles based on authMiddleware
-    if (role === "ADMIN") return authMiddleware.verifyAdmin(req, res, next);
+function authenticate(req, res, next) {
+  authMiddleware.verifyToken(req, res, next);
+}
+
+const authorize =
+  (...roles) =>
+  (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
     next();
-  },
-});
+  };
+
+// Routers
+const bookRoutes = createBookRoutes(bookController, authenticate, authorize);
+const authorRoutes = createAuthorRoutes(
+  authorController,
+  authenticate,
+  authorize,
+);
+const authRoutes = createAuthRoutes(authController);
+const reviewRoutes = createReviewRoutes(
+  reviewController,
+  authenticate,
+  authorize,
+);
 const reviewCrudRoutes = createReviewCrudRoutes({
   reviewController,
-  authenticate: authMiddleware.verifyToken,
-  authorize: (role) => (req, res, next) => {
-    if (role === "ADMIN") {
-      return authMiddleware.verifyAdmin(req, res, next);
-    }
-    next();
-  },
+  authenticate,
+  authorize,
 });
 
 // Route Registration
